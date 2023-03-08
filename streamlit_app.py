@@ -6,8 +6,6 @@ st.title("ChatGPT聊天机器人")
 st.markdown(
     """
     使用 Openai chatgpt gpt-3.5-turbo 模型创建的聊天机器人
-    - 支持多轮对话
-    - AI 生成的回复会实时打印出来
     """
 )
 
@@ -26,13 +24,16 @@ prompt_dict = {
     "中英翻译": "你现在是一个中英翻译机器人，翻译用户输入的每一句话，如果输入是中文，翻译成英文，如果输入是英文，翻译成中文",
     "心理咨询师": "你现在是一个心理咨询师，请友好，耐心，详细地帮助客户解答疑惑",
 }
-role_prompt = prompt_dict[role]
+default_prompt = prompt_dict.get(role, '') # type: ignore
+# create prompt input box, default value is role_prompt
+st.markdown("这个[网站](https://newzone.top/chatgpt/) 有很多有趣的AI角色（或者说prompt/shortcut），可以试试")
+role_prompt = st.text_input("输入prompt", value=default_prompt, key="prompt_input")
 
 if "chat_history" not in st.session_state:
     st.session_state["chat_history"] = [{"role": "system", "content": f"{role_prompt}"}]
 
 # user input
-user_input = st.text_input("输入", key="user_input")
+user_input = st.text_area("输入", key="user_input")
 
 
 # create a clear history button
