@@ -27,13 +27,13 @@ prompt_dict = {
 default_prompt = prompt_dict.get(role, '') # type: ignore
 # create prompt input box, default value is role_prompt
 st.markdown("这个[网站](https://newzone.top/chatgpt/) 有很多有趣的AI角色（或者说prompt/shortcut），可以试试")
-role_prompt = st.text_input("输入prompt", value=default_prompt, key="prompt_input")
+role_prompt = st.text_input("prompt提示（可为空）", value=default_prompt, key="prompt_input")
 
 if "chat_history" not in st.session_state:
     st.session_state["chat_history"] = [{"role": "system", "content": f"{role_prompt}"}]
 
 # user input
-user_input = st.text_area("输入", key="user_input")
+user_input = st.text_input("请在这里输入", key="user_input")
 
 
 # create a clear history button
