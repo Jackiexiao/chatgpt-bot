@@ -10,12 +10,16 @@ st.markdown(
 )
 
 api_key = os.environ.get("OPENAI_API_KEY", None)
+error_block = st.empty()
 if not api_key:
-    api_key = st.text_input("Api Key", key="api_key_input")
-    st.error(
+    error_block.error(
         "Please input your api_key from openai https://platform.openai.com/account/api-keys or this app won't work"
     )
+    api_key = st.text_input("Api Key", key="api_key_input")
+    if api_key:
+        error_block.empty()
 
+openai.api_key = api_key
 # create role selection
 role = st.selectbox("选择AI角色", ["默认机器人", "中英翻译", "心理咨询师"])
 prompt_dict = {
@@ -26,18 +30,19 @@ prompt_dict = {
 }
 default_prompt = prompt_dict.get(role, '') # type: ignore
 # create prompt input box, default value is role_prompt
-st.markdown("这个[网站](https://newzone.top/chatgpt/) 有很多有趣的AI角色（或者说prompt/shortcut），可以试试")
-role_prompt = st.text_input("prompt提示（可为空）", value=default_prompt, key="prompt_input")
+
+with st.expander("自定义提示词", expanded=False):
+    st.markdown("这个[网站](https://newzone.top/chatgpt/) 有很多有趣的AI角色（或者说prompt/shortcut），可以试试，也可以输入自定义的 prompt提示词")
+    role_prompt = st.text_input("输入自定义prompt", value=default_prompt, key="prompt_input")
 
 if "chat_history" not in st.session_state:
     st.session_state["chat_history"] = [{"role": "system", "content": f"{role_prompt}"}]
 
 # user input
-user_input = st.text_input("请在这里输入", key="user_input")
-
+user_input = st.text_input("用户输入", key="user_input")
 
 # create a clear history button
-clear_history = st.button("Clear History")
+clear_history = st.button("清空历史记录")
 
 if clear_history or role_prompt != st.session_state["chat_history"][0]["content"]:
     # reset chat history with role
@@ -46,36 +51,38 @@ if clear_history or role_prompt != st.session_state["chat_history"][0]["content"
     st.session_state["chat_history"] = [{"role": "system", "content": f"{role_prompt}"}]
     user_input = None
 
-spin = st.container()
-stream_block = st.empty()
-history_block = st.container()
+with st.expander("聊天记录", expanded=True):
+    spin = st.container()
+    stream_block = st.empty()
+    history_block = st.container()
 
-rename_dict = {"user": "User   ", "assistant": "Chatgpt", "system": "Prompt"}
+    rename_dict = {"user": "User   ", "assistant": "Chatgpt", "system": "Prompt"}
 
-if user_input:
-    st.session_state["chat_history"].append(
-        {"role": "user", "content": f"{user_input}"}
-    )
-    with history_block:
-        for message in st.session_state["chat_history"][::-1]:
-            name = rename_dict.get(message["role"], message["role"])
-            st.markdown(f"{name}: {message['content']}")
 
-    with spin:
-        with st.spinner("生成中..."):
-            completion = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=st.session_state["chat_history"],
-                temperature=1,
-                stream=True,
-            )
+    if user_input:
+        st.session_state["chat_history"].append(
+            {"role": "user", "content": f"{user_input}"}
+        )
+        with history_block:
+            for message in st.session_state["chat_history"][::-1]:
+                name = rename_dict.get(message["role"], message["role"])
+                st.markdown(f"{name}: {message['content']}")
 
-            # 流式（实时）显示chatgpt的返回信息
-            chat_response = ""
-            for res in completion:
-                word = res.choices[0].delta.get("content", "")
-                chat_response += word
-                stream_block.markdown("chatGPT: " + chat_response)
-            st.session_state["chat_history"].append(
-                {"role": "assistant", "content": chat_response}
-            )
+        with spin:
+            with st.spinner("生成中..."):
+                completion = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=st.session_state["chat_history"],
+                    temperature=1,
+                    stream=True,
+                )
+
+                # 流式（实时）显示chatgpt的返回信息
+                chat_response = ""
+                for res in completion:
+                    word = res.choices[0].delta.get("content", "")
+                    chat_response += word
+                    stream_block.markdown("chatGPT: " + chat_response)
+                st.session_state["chat_history"].append(
+                    {"role": "assistant", "content": chat_response}
+                )

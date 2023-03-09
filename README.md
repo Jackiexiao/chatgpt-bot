@@ -10,3 +10,6 @@
 pip install -r requirements.txt
 export OPENAI_API_KEY="sk-**" && streamlit run streamlit_app.py
 ```
+
+## Demo
+![demo](./demo.png)
